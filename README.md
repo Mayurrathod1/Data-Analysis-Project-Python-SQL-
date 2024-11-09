@@ -1,144 +1,131 @@
+# Retail Orders Analysis & Data Transformation
 
-# Retail Orders Data Analysis
+## 📑 Project Overview
+This project focuses on analyzing a retail orders dataset obtained from Kaggle. The analysis involves data cleaning, preprocessing, and transforming the data into a SQLite database. Additionally, the project derives insights like the top-selling products and sales performance across different regions.
 
-This project involves analyzing a retail orders dataset, performing data cleaning, transformation, and then analyzing sales performance using SQL queries and Python.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Installation](#installation)
-- [Dataset Overview](#dataset-overview)
+## 📂 Table of Contents
+- [Project Overview](#project-overview)
+- [Dataset Description](#dataset-description)
+- [Installation & Setup](#installation--setup)
 - [Data Preprocessing](#data-preprocessing)
-- [SQL Analysis](#sql-analysis)
-- [Results and Analysis](#results-and-analysis)
-- [Conclusion](#conclusion)
+- [Data Analysis](#data-analysis)
+- [Database Operations](#database-operations)
+- [Insights & Results](#insights--results)
 
-## Introduction
+---
 
-This project focuses on analyzing the `Retail Orders` dataset, which contains transactional data for a retail company. The goal of the analysis is to perform data wrangling tasks, including data cleaning, transformation, and subsequent analysis to gain insights into sales performance, shipping modes, product categories, and more.
+## 📊 Dataset Description
+- **Source**: [Kaggle - Retail Orders](https://www.kaggle.com/datasets/ankitbansal06/retail-orders)
+- **File**: `orders.csv`
+- The dataset contains information on customer orders, including fields like `order_date`, `ship_mode`, `category`, `cost_price`, `list_price`, `discount_percent`, etc.
 
-## Installation
+### Sample Rows
+| Order ID | Order Date | Ship Mode    | Segment  | Region | Category     | List Price | Quantity | Discount Percent |
+|----------|------------|--------------|----------|--------|--------------|------------|----------|------------------|
+| 1        | 2023-03-01 | Second Class | Consumer | South  | Furniture    | 260        | 2        | 2                |
+| 2        | 2023-08-15 | Second Class | Consumer | South  | Furniture    | 730        | 3        | 3                |
 
-Follow these steps to set up the project on your local environment:
+---
 
-1. **Clone the repository:**
+## ⚙️ Installation & Setup
+
+1. **Clone the Repository**
    ```bash
-   git clone https://github.com/yourusername/retail-orders-analysis.git
+   git clone https://github.com/your-username/retail-orders-analysis.git
    cd retail-orders-analysis
    ```
 
-2. **Install necessary dependencies:**
-   You need `pandas`, `kaggle`, and `sqlite3` to run this project. You can install them using pip:
+2. **Install Required Libraries**
    ```bash
-   pip install kaggle pandas sqlite3
+   pip install pandas numpy sqlite3 kaggle
    ```
 
-3. **Authenticate Kaggle API:**
-   - Obtain your Kaggle API key from your [Kaggle Account](https://www.kaggle.com/docs/api).
-   - Save the `kaggle.json` file and place it in the `~/.kaggle/` directory on your machine.
-
-4. **Download the dataset:**
-   The dataset can be downloaded using the Kaggle API:
-   ```bash
-   kaggle datasets download ankitbansal06/retail-orders -f orders.csv
+3. **Download Dataset**
+   Ensure you have your Kaggle API token set up:
+   ```python
+   !kaggle datasets download ankitbansal06/retail-orders -f orders.csv
    ```
 
-## Dataset Overview
-
-The dataset contains information about various retail orders, with columns including order details, product information, pricing, and sales data. It includes the following columns:
-
-- **Order ID**: Unique identifier for each order
-- **Order Date**: Date when the order was placed
-- **Ship Mode**: Mode of shipment (e.g., Standard, Same Day)
-- **Segment**: Customer segment (e.g., Consumer, Corporate)
-- **Country**: Country where the order was placed
-- **City**: City where the order was placed
-- **State**: State where the order was placed
-- **Region**: Geographic region of the order
-- **Category**: Product category
-- **Sub Category**: Sub-category of the product
-- **Product ID**: Unique identifier for the product
-- **Cost Price**: Cost of the product
-- **List Price**: List price of the product
-- **Quantity**: Number of items purchased
-- **Discount Percent**: Discount offered on the product
-
-The dataset contains over 9,900 rows of transaction data.
-
-## Data Preprocessing
-
-Data preprocessing is a crucial step in preparing the dataset for analysis. The following transformations were applied:
-
-### 1. **Handling Missing Values:**
-   - Null values in `Ship Mode` were replaced with meaningful data, such as filtering out values like "Not Available" and "unknown".
-
-### 2. **Renaming Columns:**
-   - Column names were converted to lowercase and spaces were replaced with underscores for consistency and ease of access.
-
-### 3. **Feature Engineering:**
-   - **Discount Calculation**: A new column `discount` was created, which is calculated as `list_price * discount_percent * 0.01`.
-   - **Sale Price**: A new column `sale_price` was derived as `list_price - discount`.
-   - **Profit**: A new column `profit` was added, calculated as `sale_price - cost_price`.
-
-### 4. **Datetime Conversion:**
-   - The `order_date` column was converted from an object data type to a datetime format.
-
-### 5. **Removing Unnecessary Columns:**
-   - The `list_price`, `cost_price`, and `discount_percent` columns were dropped as they were no longer needed for further analysis.
-
-## SQL Analysis
-
-The analysis was performed using SQL queries executed on a SQLite database, which was populated with the preprocessed dataset.
-
-### 1. **Top Products by Sales:**
-   The query retrieves the top 10 products by total sales:
-   ```sql
-   SELECT product_id, SUM(sale_price) AS sales
-   FROM df_orders
-   GROUP BY product_id
-   ORDER BY sales DESC
-   LIMIT 10;
+4. **Unzip Dataset**
+   ```python
+   import zipfile
+   zip_ref = zipfile.ZipFile('orders.csv.zip', 'r')
+   zip_ref.extractall()
+   zip_ref.close()
    ```
 
-### 2. **Top Products by Region:**
-   The query retrieves the top 5 products per region based on sales:
-   ```sql
-   WITH cte AS (
-       SELECT region, product_id, SUM(sale_price) AS sales
-       FROM df_orders
-       GROUP BY region, product_id
-   )
-   SELECT *
-   FROM (
-       SELECT *,
-              ROW_NUMBER() OVER (PARTITION BY region ORDER BY sales DESC) AS rn
-       FROM cte
-   ) A
-   WHERE rn <= 5;
+---
+
+## 🧹 Data Preprocessing
+
+1. **Loading & Cleaning Data**
+   - Load the data using `pandas`.
+   - Handle missing values by replacing specific entries (e.g., 'Not Available' and 'unknown') with NaN.
+   - Normalize column names by converting to lowercase and replacing spaces with underscores.
+   
+   ```python
+   df = pd.read_csv('orders.csv', na_values=['Not Available', 'unknown'])
+   df.columns = df.columns.str.lower().str.replace(' ', '_')
    ```
 
-### 3. **Monthly Sales by Year:**
-   The SQL query analyzes monthly sales trends over the years:
-   ```sql
-   WITH cte AS (
-       SELECT STRFTIME('%Y', order_date) AS order_year,
-              STRFTIME('%m', order_date) AS order_month,
-              SUM(sale_price) AS sales
-       FROM df_orders
-       GROUP BY STRFTIME('%Y', order_date), STRFTIME('%m', order_date)
-   )
-   SELECT *
-   FROM cte;
-   ```
+2. **Feature Engineering**
+   - Created new columns:
+     - `discount` = `list_price` * `discount_percent` / 100
+     - `sale_price` = `list_price` - `discount`
+     - `profit` = `sale_price` - `cost_price`
 
-## Results and Analysis
+3. **Data Type Conversion**
+   - Converted `order_date` to a `datetime` object for easier analysis:
+     ```python
+     df['order_date'] = pd.to_datetime(df['order_date'], format="%Y-%m-%d")
+     ```
 
-After running the above SQL queries, the results were extracted, showing key trends in sales performance. Key findings include:
+4. **Dropping Unnecessary Columns**
+   - Removed columns like `list_price`, `cost_price`, and `discount_percent` to reduce data size:
+     ```python
+     df.drop(columns=['list_price', 'cost_price', 'discount_percent'], inplace=True, errors='ignore')
+     ```
 
-- The **top products by total sales** were identified, with some technology products leading the list.
-- **Regional preferences** were revealed by showing the top 5 products per region.
-- **Monthly sales trends** showed fluctuations in demand throughout the year, providing insights for inventory and marketing strategies.
+---
 
-## Conclusion
+## 🗃️ Database Operations
 
-This project demonstrates how data cleaning, transformation, and analysis using Python and SQL can help derive valuable insights from retail transaction data. The analysis can be used to drive business decisions such as optimizing inventory, targeting specific customer segments, and improving sales strategies.
+1. **Load Data into SQLite**
+   - Exported the cleaned DataFrame to a SQLite database:
+     ```python
+     import sqlite3
+     conn = sqlite3.connect('df_orders')
+     df.to_sql('df_orders', con=conn, index=False, if_exists='replace')
+     ```
+
+2. **Running SQL Queries**
+   - Retrieved top-selling products:
+     ```sql
+     SELECT product_id, SUM(sale_price) AS sales
+     FROM df_orders
+     GROUP BY product_id
+     ORDER BY sales DESC
+     LIMIT 10;
+     ```
+
+   - Analyzed regional sales performance using CTEs:
+     ```sql
+     WITH cte AS (
+         SELECT region, product_id, SUM(sale_price) AS sales
+         FROM df_orders
+         GROUP BY region, product_id
+     )
+     SELECT * FROM (
+         SELECT *, ROW_NUMBER() OVER (PARTITION BY region ORDER BY sales DESC) AS rn
+         FROM cte
+     ) A WHERE rn <= 5;
+     ```
+
+---
+
+## 📈 Insights & Results
+- **Top Products by Sales**:
+  - The top-selling product was **'TEC-CO-10004722'** with total sales of **$119,028**.
+- **Regional Analysis**:
+  - The Central region’s top product was `'TEC-CO-10004722'` with sales of **$33,950**.
+  - In the South region, `'TEC-MA-10002412'` dominated with **$43,468.8** in sales.
