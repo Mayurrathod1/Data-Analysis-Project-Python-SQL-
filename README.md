@@ -38,9 +38,3 @@ Follow these steps to set up the project environment and download the dataset.
 ### Prerequisites
 1. Install Python (>=3.8) and necessary libraries, especially `kaggle` for data downloading and `pandas` for data processing.
 2. Set up a Kaggle API key to authenticate and download the dataset.
-
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone <repository_url>
-   cd <repository_directory>
